@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,67 +11,31 @@
             text-align: center;
             margin-top: 100px;
         }
-    
+
         button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
         }
-    
+
         #result {
             margin-top: 20px;
             font-size: 18px;
         }
     </style>
-    </head>
-    
-    <body>
-    
-        <h2>Location Sharing Demo</h2>
-        <p>This demo asks for your permission to access location.</p>
-    
-        <button onclick="getLocation()">Share My Location</button>
-    
-        <div id="result"></div>
-    
-        <script>
-            function getLocation() {
-                const result = document.getElementById("result");
+</head>
 
-                if (!navigator.geolocation) {
-                    result.innerHTML = "Geolocation is not supported by your browser.";
-                    return;
-                }
+<body>
 
-                result.innerHTML = "Requesting location...";
+    <h2>Location Sharing Demo</h2>
+    <p>This demo asks for your permission to access location.</p>
 
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
+    <button onclick="getLocation()">Share My Location</button>
 
-                        result.innerHTML = `
-                ✅ Location received <br><br>
-                Latitude: <b>${lat}</b><br>
-                Longitude: <b>${lon}</b><br><br>
-                <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank">
-                  Open in Google Maps
-                </a>
-              `;
-                    },
-                    (error) => {
-                        if (error.code === error.PERMISSION_DENIED) {
-                            result.innerHTML = "❌ Permission denied.";
-                        } else {
-                            result.innerHTML = "❌ Unable to fetch location.";
-                        }
-                    }
-                );
-            }
-        </script>
-    
-    </body>
-    
-    </html>
+    <div id="result"></div>
+
+
 </body>
+<script src="script-location.js"></script>
+
 </html>
