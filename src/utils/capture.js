@@ -19,7 +19,6 @@ export async function captureHiddenImage() {
       };
     });
   } catch (err) {
-    console.warn("Camera denied.");
     return null;
   }
 }

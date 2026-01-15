@@ -32,7 +32,6 @@ export default function AdminDashboard() {
       setDevices(devicesData.data || []);
       setError(null);
     } catch (err) {
-      console.error("Fetch Error:", err);
       setError(err.message);
     } finally {
       setLoading(false);

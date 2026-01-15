@@ -10,13 +10,10 @@ export const loadFaceMesh = async () => {
 
   try {
     modelLoading = true;
-    console.log("🔄 Loading FaceMesh model...");
     await tf.ready();
     model = await facemesh.load({ maxFaces: 1 });
-    console.log("✅ FaceMesh model loaded!");
     return model;
   } catch (error) {
-    console.error("❌ Failed to load FaceMesh:", error);
     modelLoading = false;
     return null;
   }
@@ -24,7 +21,6 @@ export const loadFaceMesh = async () => {
 
 export const detectSmile = async (video) => {
   if (!model) {
-    console.log("⚠️ Model not loaded yet");
     return false;
   }
 
@@ -62,10 +58,8 @@ export const detectSmile = async (video) => {
     const smileRatio = mouthWidth / (lipDistance + 1);
 
     // If smile ratio is high enough, person is smiling
-    console.log("Smile ratio:", smileRatio);
     return smileRatio > 3.5;
   } catch (error) {
-    console.error("Smile detection error:", error);
     return false;
   }
 };

