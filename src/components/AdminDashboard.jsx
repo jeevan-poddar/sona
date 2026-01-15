@@ -11,7 +11,7 @@ export default function AdminDashboard({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [filter, setFilter] = useState('all'); // 'all', 'today', 'week', 'month'
+  const [filter, setFilter] = useState("all"); // 'all', 'today', 'week', 'month'
 
   const handleLogout = () => {
     if (onLogout) {
@@ -23,24 +23,24 @@ export default function AdminDashboard({ onLogout }) {
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
-      
+
       // Create a temporary URL for the blob
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       // Create a temporary link element
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = blobUrl;
       link.download = `SONA_${sessionId}_${new Date().getTime()}.jpg`;
-      
+
       // Trigger the download
       document.body.appendChild(link);
       link.click();
-      
+
       // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      alert('Error downloading image: ' + err.message);
+      alert("Error downloading image: " + err.message);
     }
   };
   useEffect(() => {
@@ -52,9 +52,18 @@ export default function AdminDashboard({ onLogout }) {
       setLoading(true);
 
       const [imagesData, locationsData, devicesData] = await Promise.all([
-        supabaseClient.from("images_table").select("*").order("created_at", { ascending: false }),
-        supabaseClient.from("location_table").select("*").order("created_at", { ascending: false }),
-        supabaseClient.from("device_table").select("*").order("created_at", { ascending: false }),
+        supabaseClient
+          .from("images_table")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabaseClient
+          .from("location_table")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabaseClient
+          .from("device_table")
+          .select("*")
+          .order("created_at", { ascending: false }),
       ]);
 
       if (imagesData.error) throw imagesData.error;
@@ -73,179 +82,226 @@ export default function AdminDashboard({ onLogout }) {
   };
 
   const deleteImage = async (img) => {
-    if (!confirm('Are you sure you want to delete this image?')) return;
-    
+    if (!confirm("Are you sure you want to delete this image?")) return;
+
     try {
       // Extract filename from URL
-      const fileName = img.image_url.split('/').pop();
-      
+      const fileName = img.image_url.split("/").pop();
+
       // Delete from storage
-      await supabaseClient.storage.from('images').remove([fileName]);
-      
+      await supabaseClient.storage.from("images").remove([fileName]);
+
       // Delete from database
-      await supabaseClient.from('images_table').delete().eq('id', img.id);
-      
+      await supabaseClient.from("images_table").delete().eq("id", img.id);
+
       // Update state
-      setImages(images.filter(i => i.id !== img.id));
+      setImages(images.filter((i) => i.id !== img.id));
       setSelectedImage(null);
     } catch (err) {
-      alert('Error deleting image: ' + err.message);
+      alert("Error deleting image: " + err.message);
     }
   };
 
   const deleteCompleteSession = async (sessionId) => {
-    if (!confirm('Are you sure you want to delete this entire session? This will remove all data (image, location, and device info).')) return;
-    
+    if (
+      !confirm(
+        "Are you sure you want to delete this entire session? This will remove all data (image, location, and device info)."
+      )
+    )
+      return;
+
     try {
       // Find and delete the image
-      const img = images.find(i => i.session_id === sessionId);
+      const img = images.find((i) => i.session_id === sessionId);
       if (img) {
-        const fileName = img.image_url.split('/').pop();
-        const storageResult = await supabaseClient.storage.from('images').remove([fileName]);
-        if (storageResult.error) console.error('Storage delete error:', storageResult.error);
-        
-        const imgDeleteResult = await supabaseClient.from('images_table').delete().eq('session_id', sessionId);
+        const fileName = img.image_url.split("/").pop();
+        const storageResult = await supabaseClient.storage
+          .from("images")
+          .remove([fileName]);
+        if (storageResult.error)
+          console.error("Storage delete error:", storageResult.error);
+
+        const imgDeleteResult = await supabaseClient
+          .from("images_table")
+          .delete()
+          .eq("session_id", sessionId);
         if (imgDeleteResult.error) {
-          console.error('Image delete error:', imgDeleteResult.error);
-          throw new Error(`Failed to delete image: ${imgDeleteResult.error.message}`);
+          console.error("Image delete error:", imgDeleteResult.error);
+          throw new Error(
+            `Failed to delete image: ${imgDeleteResult.error.message}`
+          );
         }
       }
-      
+
       // Delete location data
-      const locDeleteResult = await supabaseClient.from('location_table').delete().eq('session_id', sessionId);
+      const locDeleteResult = await supabaseClient
+        .from("location_table")
+        .delete()
+        .eq("session_id", sessionId);
       if (locDeleteResult.error) {
-        console.error('Location delete error:', locDeleteResult.error);
-        throw new Error(`Failed to delete location: ${locDeleteResult.error.message}`);
+        console.error("Location delete error:", locDeleteResult.error);
+        throw new Error(
+          `Failed to delete location: ${locDeleteResult.error.message}`
+        );
       }
-      
+
       // Delete device data
-      const devDeleteResult = await supabaseClient.from('device_table').delete().eq('session_id', sessionId);
+      const devDeleteResult = await supabaseClient
+        .from("device_table")
+        .delete()
+        .eq("session_id", sessionId);
       if (devDeleteResult.error) {
-        console.error('Device delete error:', devDeleteResult.error);
-        throw new Error(`Failed to delete device: ${devDeleteResult.error.message}`);
+        console.error("Device delete error:", devDeleteResult.error);
+        throw new Error(
+          `Failed to delete device: ${devDeleteResult.error.message}`
+        );
       }
-      
+
       // Update states
-      setImages(images.filter(i => i.session_id !== sessionId));
-      setLocations(locations.filter(l => l.session_id !== sessionId));
-      setDevices(devices.filter(d => d.session_id !== sessionId));
+      setImages(images.filter((i) => i.session_id !== sessionId));
+      setLocations(locations.filter((l) => l.session_id !== sessionId));
+      setDevices(devices.filter((d) => d.session_id !== sessionId));
       setSelectedImage(null);
-      
-      alert('Session deleted successfully!');
+
+      alert("Session deleted successfully!");
     } catch (err) {
-      console.error('Delete error:', err);
-      alert('Error deleting session: ' + err.message);
+      console.error("Delete error:", err);
+      alert("Error deleting session: " + err.message);
     }
   };
 
   const filterImages = () => {
-    if (filter === 'all') return images;
-    
+    if (filter === "all") return images;
+
     const now = new Date();
-    const filtered = images.filter(img => {
+    const filtered = images.filter((img) => {
       const imgDate = new Date(img.created_at);
       const diffTime = Math.abs(now - imgDate);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (filter === 'today') return diffDays <= 1;
-      if (filter === 'week') return diffDays <= 7;
-      if (filter === 'month') return diffDays <= 30;
+
+      if (filter === "today") return diffDays <= 1;
+      if (filter === "week") return diffDays <= 7;
+      if (filter === "month") return diffDays <= 30;
       return true;
     });
-    
+
     return filtered;
   };
 
   const filteredImages = filterImages();
 
-  // Create a map of images by session_id for quick lookup
-  const imagesBySession = {};
-  images.forEach(img => {
-    if (img.session_id && !imagesBySession[img.session_id]) {
-      imagesBySession[img.session_id] = img.image_url;
-    }
+  // Create lookup maps for locations and devices by session_id
+  const locationsBySession = {};
+  locations.forEach((loc) => {
+    locationsBySession[loc.session_id] = loc;
   });
 
-  // Combine location and device data by session_id
-  const combinedData = {};
-  locations.forEach(loc => {
-    if (!combinedData[loc.session_id]) {
-      combinedData[loc.session_id] = {};
-    }
-    combinedData[loc.session_id].location = loc;
-  });
-  devices.forEach(dev => {
-    if (!combinedData[dev.session_id]) {
-      combinedData[dev.session_id] = {};
-    }
-    combinedData[dev.session_id].device = dev;
+  const devicesBySession = {};
+  devices.forEach((dev) => {
+    devicesBySession[dev.session_id] = dev;
   });
 
-  const combinedCards = Object.values(combinedData);
-
-  if (loading) return <div className="admin-container"><p className="loading-text">Loading...</p></div>;
-  if (error) return <div className="admin-container"><p className="error">Error: {error}</p></div>;
+  if (loading)
+    return (
+      <div className="admin-container">
+        <p className="loading-text">Loading...</p>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="admin-container">
+        <p className="error">Error: {error}</p>
+      </div>
+    );
 
   return (
     <div className="admin-container">
       <div className="admin-header">
         <h1>🕵️ Admin Dashboard</h1>
-        <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
+        <button className="logout-btn" onClick={handleLogout}>
+          🚪 Logout
+        </button>
       </div>
-      
+
       <div className="dashboard-grid">
-        {/* Combined Locations & Device Section */}
+        {/* Individual Image Cards */}
         <div className="section">
           <div className="combined-header">
-            <h2>� Session Data ({combinedCards.length})</h2>
+            <h2>📸 Captured Images ({filteredImages.length})</h2>
+            <div className="filter-buttons">
+              <button
+                className={filter === "all" ? "active" : ""}
+                onClick={() => setFilter("all")}
+              >
+                All
+              </button>
+              <button
+                className={filter === "today" ? "active" : ""}
+                onClick={() => setFilter("today")}
+              >
+                Today
+              </button>
+              <button
+                className={filter === "week" ? "active" : ""}
+                onClick={() => setFilter("week")}
+              >
+                Week
+              </button>
+              <button
+                className={filter === "month" ? "active" : ""}
+                onClick={() => setFilter("month")}
+              >
+                Month
+              </button>
+            </div>
           </div>
 
-          {combinedCards.length === 0 ? (
-            <p>No data found</p>
+          {filteredImages.length === 0 ? (
+            <p>No images found</p>
           ) : (
             <div className="cards-grid">
-              {combinedCards.map((data, idx) => {
-                const loc = data.location;
-                const dev = data.device;
-                const sessionId = loc?.session_id || dev?.session_id;
-                
+              {filteredImages.map((img) => {
+                const loc = locationsBySession[img.session_id];
+                const dev = devicesBySession[img.session_id];
+
                 return (
-                  <div key={idx} className="info-card combined-card">
-                    {imagesBySession[sessionId] && (
-                      <div className="card-image-container">
-                        <img 
-                          src={imagesBySession[sessionId]} 
-                          alt="Session capture"
-                          className="card-image-preview"
-                          onClick={() => setSelectedImage({image_url: imagesBySession[sessionId]})}
-                          style={{cursor: 'pointer'}}
-                        />
-                        <div className="image-buttons">
-                          <button 
-                            className="img-btn view-btn"
-                            onClick={() => setSelectedImage({image_url: imagesBySession[sessionId]})}
-                            title="View Photo"
-                          >
-                            👁️ View
-                          </button>
-                          <button 
-                            className="img-btn download-btn"
-                            onClick={() => downloadPhoto(imagesBySession[sessionId], sessionId)}
-                            title="Download Photo"
-                          >
-                            ⬇️ Download
-                          </button>
-                          <button 
-                            className="img-btn delete-btn"
-                            onClick={() => deleteCompleteSession(sessionId)}
-                            title="Delete Complete Session"
-                          >
-                            🗑️ Delete
-                          </button>
-                        </div>
+                  <div key={img.id} className="info-card combined-card">
+                    {/* Image */}
+                    <div className="card-image-container">
+                      <img
+                        src={img.image_url}
+                        alt="Captured"
+                        className="card-image-preview"
+                        onClick={() => setSelectedImage(img)}
+                        style={{ cursor: "pointer" }}
+                      />
+                      <div className="image-buttons">
+                        <button
+                          className="img-btn view-btn"
+                          onClick={() => setSelectedImage(img)}
+                          title="View Photo"
+                        >
+                          👁️ View
+                        </button>
+                        <button
+                          className="img-btn download-btn"
+                          onClick={() =>
+                            downloadPhoto(img.image_url, img.session_id)
+                          }
+                          title="Download Photo"
+                        >
+                          ⬇️ Download
+                        </button>
+                        <button
+                          className="img-btn delete-btn"
+                          onClick={() => deleteImage(img)}
+                          title="Delete Image"
+                        >
+                          🗑️ Delete
+                        </button>
                       </div>
-                    )}
-                    
+                    </div>
+
                     {/* Location Section */}
                     {loc && (
                       <>
@@ -256,15 +312,20 @@ export default function AdminDashboard({ onLogout }) {
                         <div className="card-body">
                           <div className="card-row">
                             <span className="label">Location:</span>
-                            <span className="value">{loc.city}, {loc.country}</span>
+                            <span className="value">
+                              {loc.city}, {loc.country}
+                            </span>
                           </div>
                           <div className="card-row">
                             <span className="label">Region:</span>
-                            <span className="value">{loc.region || 'N/A'}</span>
+                            <span className="value">{loc.region || "N/A"}</span>
                           </div>
                           <div className="card-row">
                             <span className="label">Coordinates:</span>
-                            <span className="value">{loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}</span>
+                            <span className="value">
+                              {loc.latitude.toFixed(4)},{" "}
+                              {loc.longitude.toFixed(4)}
+                            </span>
                           </div>
                           <div className="card-row">
                             <span className="label">ISP:</span>
@@ -272,13 +333,17 @@ export default function AdminDashboard({ onLogout }) {
                           </div>
                           <div className="card-row">
                             <span className="label">Accuracy:</span>
-                            <span className="value">{loc.accuracy ? Math.round(loc.accuracy) + "m" : "N/A"}</span>
+                            <span className="value">
+                              {loc.accuracy
+                                ? Math.round(loc.accuracy) + "m"
+                                : "N/A"}
+                            </span>
                           </div>
                         </div>
                         <div className="card-footer">
-                          <a 
-                            href={`https://maps.google.com/maps?q=${loc.latitude},${loc.longitude}`} 
-                            target="_blank" 
+                          <a
+                            href={`https://maps.google.com/maps?q=${loc.latitude},${loc.longitude}`}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="map-link"
                           >
@@ -304,7 +369,7 @@ export default function AdminDashboard({ onLogout }) {
                             <span className="label">Battery:</span>
                             <span className="value battery-info">
                               {dev.battery_level}
-                              {dev.is_charging && ' ⚡'}
+                              {dev.is_charging && " ⚡"}
                             </span>
                           </div>
                           <div className="card-row">
@@ -317,7 +382,9 @@ export default function AdminDashboard({ onLogout }) {
                           </div>
                           <div className="card-row">
                             <span className="label">Screen:</span>
-                            <span className="value">{dev.screen_resolution}</span>
+                            <span className="value">
+                              {dev.screen_resolution}
+                            </span>
                           </div>
                         </div>
                       </>
@@ -325,7 +392,10 @@ export default function AdminDashboard({ onLogout }) {
 
                     {/* Timestamp Footer */}
                     <div className="card-timestamp">
-                      📅 {new Date(loc?.created_at || dev?.created_at).toLocaleString()}
+                      📅{" "}
+                      {new Date(
+                        loc?.created_at || dev?.created_at
+                      ).toLocaleString()}
                     </div>
                   </div>
                 );
@@ -335,22 +405,46 @@ export default function AdminDashboard({ onLogout }) {
         </div>
       </div>
 
-      <button className="refresh-btn" onClick={fetchAllData}>🔄 Refresh</button>
+      <button className="refresh-btn" onClick={fetchAllData}>
+        🔄 Refresh
+      </button>
 
       {/* Image Modal */}
       {selectedImage && (
         <div className="modal-overlay" onClick={() => setSelectedImage(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSelectedImage(null)}>✕</button>
-            <img src={selectedImage.image_url} alt="Full size" className="modal-image" />
+            <button
+              className="modal-close"
+              onClick={() => setSelectedImage(null)}
+            >
+              ✕
+            </button>
+            <img
+              src={selectedImage.image_url}
+              alt="Full size"
+              className="modal-image"
+            />
             <div className="modal-info">
-              <p><strong>Captured:</strong> {new Date(selectedImage.created_at).toLocaleString()}</p>
-              <p><strong>Session ID:</strong> {selectedImage.session_id}</p>
+              <p>
+                <strong>Captured:</strong>{" "}
+                {new Date(selectedImage.created_at).toLocaleString()}
+              </p>
+              <p>
+                <strong>Session ID:</strong> {selectedImage.session_id}
+              </p>
               <div className="modal-actions">
-                <a href={selectedImage.image_url} target="_blank" rel="noopener noreferrer" className="download-btn">
+                <a
+                  href={selectedImage.image_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="download-btn"
+                >
                   ⬇️ Open Original
                 </a>
-                <button className="delete-btn" onClick={() => deleteImage(selectedImage)}>
+                <button
+                  className="delete-btn"
+                  onClick={() => deleteImage(selectedImage)}
+                >
                   🗑️ Delete
                 </button>
               </div>

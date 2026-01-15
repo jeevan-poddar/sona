@@ -1,117 +1,149 @@
+/* ===== BASE ===== */
 .smile-game {
-  position: relative;
   width: 100%;
   height: 100vh;
-  overflow: hidden;
-  background: linear-gradient(135deg, #0a0e27 0%, #1a1a3a 100%);
-}
-
-.game-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.smile-ui {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  background: radial-gradient(circle at top, #1b1e4b, #07091f);
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
-  padding: 40px;
-  pointer-events: none;
+  overflow: hidden;
+  color: white;
 }
 
-.smile-counter {
-  background: rgba(0, 0, 0, 0.6);
-  padding: 30px 50px;
-  border-radius: 15px;
+/* ===== SHAKE ===== */
+.shake {
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  25% {
+    transform: translateX(-8px);
+  }
+
+  50% {
+    transform: translateX(8px);
+  }
+}
+
+/* ===== UI ===== */
+.smile-ui {
   text-align: center;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
 }
 
-.smile-counter h1 {
-  color: #ff69b4;
-  font-size: 28px;
-  margin: 0 0 15px 0;
-  text-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+/* ===== RING ===== */
+.ring.thick {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 40px rgba(255, 105, 180, 0.45);
 }
 
-.counter-display {
-  font-size: 72px;
-  font-weight: bold;
-  color: #00ffff;
-  text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
-  animation: pulse 0.5s ease-in-out;
+.ring-inner {
+  width: 150px;
+  height: 150px;
+  background: rgba(10, 12, 40, 0.85);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.ring.complete {
+  animation: pulse 0.9s ease;
 }
 
 @keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.08);
   }
 }
 
-.smile-counter p {
-  color: #ffff00;
-  font-size: 16px;
-  margin: 15px 0 0 0;
+/* ===== EMOJI ===== */
+.emoji {
+  font-size: 96px;
+  animation: idle 2.5s ease-in-out infinite;
+}
+
+@keyframes idle {
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.emoji-complete {
+  animation: pop 1.1s ease;
+}
+
+@keyframes pop {
+  40% {
+    transform: scale(1.6) rotate(12deg);
+  }
+}
+
+/* ===== LABEL ===== */
+.ring-label {
+  margin-top: 16px;
+  font-size: 18px;
+}
+
+/* ===== SHARE PANEL ===== */
+.share-panel {
+  margin-top: 16px;
+}
+
+.share-panel img {
+  width: 120px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.share-panel button,
+.share-panel a {
+  margin: 4px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: none;
+  background: #ff69b4;
+  color: black;
   font-weight: bold;
+  cursor: pointer;
 }
 
-.capture-info {
-  color: #00ff88 !important;
-  font-size: 14px !important;
-  margin-top: 10px !important;
-  padding-top: 10px;
-  border-top: 1px solid rgba(0, 255, 136, 0.3);
-  animation: fadeIn 0.5s ease-in;
+/* ===== EMOJI SHOWER ===== */
+.emoji-shower-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
-.smile-indicator {
-  background: rgba(0, 0, 0, 0.6);
-  padding: 20px 40px;
-  border-radius: 50px;
-  color: #888;
-  font-size: 24px;
-  font-weight: bold;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
-  text-shadow: 0 0 10px rgba(136, 136, 136, 0.5);
+.emoji-particle {
+  position: absolute;
+  top: 40%;
+  animation: fall 1.6s ease forwards;
 }
 
-.smile-indicator.smiling {
-  color: #ff1493;
-  border-color: #ff1493;
-  background: rgba(255, 20, 147, 0.2);
-  box-shadow: 0 0 30px rgba(255, 20, 147, 0.6);
-  text-shadow: 0 0 20px rgba(255, 20, 147, 0.8);
-  transform: scale(1.1);
+@keyframes fall {
+  to {
+    transform: translateY(70vh) rotate(360deg);
+    opacity: 0;
+  }
 }
 
-@media (max-width: 768px) {
-  .smile-counter {
-    padding: 20px 30px;
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  .ring.thick {
+    width: 200px;
+    height: 200px;
   }
 
-  .smile-counter h1 {
-    font-size: 20px;
+  .ring-inner {
+    width: 120px;
+    height: 120px;
   }
 
-  .counter-display {
-    font-size: 48px;
-  }
-
-  .smile-indicator {
-    font-size: 18px;
-    padding: 15px 30px;
+  .emoji {
+    font-size: 70px;
   }
 }

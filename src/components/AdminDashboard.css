@@ -639,3 +639,56 @@
   text-align: center;
   font-weight: bold;
 }
+
+/* Session Images Grid */
+.session-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 10px;
+  background: #f8f9fa;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.session-image-item {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.session-image-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.session-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-count {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+/* Update card-image-container for multiple images */
+.card-image-container {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+  overflow: visible;
+  background: #f0f0f0;
+}
