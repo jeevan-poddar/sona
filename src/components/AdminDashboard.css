@@ -439,6 +439,96 @@
   transform: scale(1.05);
 }
 
+/* Card Image Container with Buttons */
+.card-image-container {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background: #f0f0f0;
+  group: 'image';
+}
+
+.card-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+  transition: transform 0.3s, filter 0.3s;
+}
+
+.card-image-container:hover .card-image-preview {
+  transform: scale(1.05);
+  filter: brightness(0.7);
+}
+
+.image-buttons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transition: opacity 0.3s;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.card-image-container:hover .image-buttons {
+  opacity: 1;
+}
+
+.img-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.view-btn {
+  background: #3498db;
+}
+
+.view-btn:hover {
+  background: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.download-btn {
+  background: #27ae60;
+}
+
+.download-btn:hover {
+  background: #229954;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+}
+
+.delete-btn {
+  background: #e74c3c;
+}
+
+.delete-btn:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
 .card-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 15px 20px;

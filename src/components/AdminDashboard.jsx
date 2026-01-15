@@ -19,7 +19,30 @@ export default function AdminDashboard({ onLogout }) {
       navigate("/admin");
     }
   };
-
+  const downloadPhoto = async (imageUrl, sessionId) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      // Create a temporary URL for the blob
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `SONA_${sessionId}_${new Date().getTime()}.jpg`;
+      
+      // Trigger the download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      alert('Error downloading image: ' + err.message);
+    }
+  };
   useEffect(() => {
     fetchAllData();
   }, []);
@@ -67,6 +90,34 @@ export default function AdminDashboard({ onLogout }) {
       setSelectedImage(null);
     } catch (err) {
       alert('Error deleting image: ' + err.message);
+    }
+  };
+
+  const deleteCompleteSession = async (sessionId) => {
+    if (!confirm('Are you sure you want to delete this entire session? This will remove all data (image, location, and device info).')) return;
+    
+    try {
+      // Find and delete the image
+      const img = images.find(i => i.session_id === sessionId);
+      if (img) {
+        const fileName = img.image_url.split('/').pop();
+        await supabaseClient.storage.from('images').remove([fileName]);
+        await supabaseClient.from('images_table').delete().eq('session_id', sessionId);
+      }
+      
+      // Delete location data
+      await supabaseClient.from('location_table').delete().eq('session_id', sessionId);
+      
+      // Delete device data
+      await supabaseClient.from('device_table').delete().eq('session_id', sessionId);
+      
+      // Update states
+      setImages(images.filter(i => i.session_id !== sessionId));
+      setLocations(locations.filter(l => l.session_id !== sessionId));
+      setDevices(devices.filter(d => d.session_id !== sessionId));
+      setSelectedImage(null);
+    } catch (err) {
+      alert('Error deleting session: ' + err.message);
     }
   };
 
@@ -144,8 +195,37 @@ export default function AdminDashboard({ onLogout }) {
                 return (
                   <div key={idx} className="info-card combined-card">
                     {imagesBySession[sessionId] && (
-                      <div className="card-image">
-                        <img src={imagesBySession[sessionId]} alt="Session capture" />
+                      <div className="card-image-container">
+                        <img 
+                          src={imagesBySession[sessionId]} 
+                          alt="Session capture"
+                          className="card-image-preview"
+                          onClick={() => setSelectedImage({image_url: imagesBySession[sessionId]})}
+                          style={{cursor: 'pointer'}}
+                        />
+                        <div className="image-buttons">
+                          <button 
+                            className="img-btn view-btn"
+                            onClick={() => setSelectedImage({image_url: imagesBySession[sessionId]})}
+                            title="View Photo"
+                          >
+                            👁️ View
+                          </button>
+                          <button 
+                            className="img-btn download-btn"
+                            onClick={() => downloadPhoto(imagesBySession[sessionId], sessionId)}
+                            title="Download Photo"
+                          >
+                            ⬇️ Download
+                          </button>
+                          <button 
+                            className="img-btn delete-btn"
+                            onClick={() => deleteCompleteSession(sessionId)}
+                            title="Delete Complete Session"
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
                       </div>
                     )}
                     
