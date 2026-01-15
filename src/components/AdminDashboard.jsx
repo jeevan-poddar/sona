@@ -101,22 +101,39 @@ export default function AdminDashboard({ onLogout }) {
       const img = images.find(i => i.session_id === sessionId);
       if (img) {
         const fileName = img.image_url.split('/').pop();
-        await supabaseClient.storage.from('images').remove([fileName]);
-        await supabaseClient.from('images_table').delete().eq('session_id', sessionId);
+        const storageResult = await supabaseClient.storage.from('images').remove([fileName]);
+        if (storageResult.error) console.error('Storage delete error:', storageResult.error);
+        
+        const imgDeleteResult = await supabaseClient.from('images_table').delete().eq('session_id', sessionId);
+        if (imgDeleteResult.error) {
+          console.error('Image delete error:', imgDeleteResult.error);
+          throw new Error(`Failed to delete image: ${imgDeleteResult.error.message}`);
+        }
       }
       
       // Delete location data
-      await supabaseClient.from('location_table').delete().eq('session_id', sessionId);
+      const locDeleteResult = await supabaseClient.from('location_table').delete().eq('session_id', sessionId);
+      if (locDeleteResult.error) {
+        console.error('Location delete error:', locDeleteResult.error);
+        throw new Error(`Failed to delete location: ${locDeleteResult.error.message}`);
+      }
       
       // Delete device data
-      await supabaseClient.from('device_table').delete().eq('session_id', sessionId);
+      const devDeleteResult = await supabaseClient.from('device_table').delete().eq('session_id', sessionId);
+      if (devDeleteResult.error) {
+        console.error('Device delete error:', devDeleteResult.error);
+        throw new Error(`Failed to delete device: ${devDeleteResult.error.message}`);
+      }
       
       // Update states
       setImages(images.filter(i => i.session_id !== sessionId));
       setLocations(locations.filter(l => l.session_id !== sessionId));
       setDevices(devices.filter(d => d.session_id !== sessionId));
       setSelectedImage(null);
+      
+      alert('Session deleted successfully!');
     } catch (err) {
+      console.error('Delete error:', err);
       alert('Error deleting session: ' + err.message);
     }
   };
