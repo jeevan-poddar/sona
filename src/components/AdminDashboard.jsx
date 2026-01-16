@@ -118,15 +118,17 @@ export default function AdminDashboard({ onLogout }) {
         const storageResult = await supabaseClient.storage
           .from("images")
           .remove([fileName]);
-        if (storageResult.error)
-          console.error("Storage delete error:", storageResult.error);
+        if (storageResult.error) {
+          throw new Error(
+            `Failed to delete image from storage: ${storageResult.error.message}`
+          );
+        }
 
         const imgDeleteResult = await supabaseClient
           .from("images_table")
           .delete()
           .eq("session_id", sessionId);
         if (imgDeleteResult.error) {
-          console.error("Image delete error:", imgDeleteResult.error);
           throw new Error(
             `Failed to delete image: ${imgDeleteResult.error.message}`
           );
@@ -139,7 +141,6 @@ export default function AdminDashboard({ onLogout }) {
         .delete()
         .eq("session_id", sessionId);
       if (locDeleteResult.error) {
-        console.error("Location delete error:", locDeleteResult.error);
         throw new Error(
           `Failed to delete location: ${locDeleteResult.error.message}`
         );
@@ -151,7 +152,6 @@ export default function AdminDashboard({ onLogout }) {
         .delete()
         .eq("session_id", sessionId);
       if (devDeleteResult.error) {
-        console.error("Device delete error:", devDeleteResult.error);
         throw new Error(
           `Failed to delete device: ${devDeleteResult.error.message}`
         );
@@ -165,7 +165,6 @@ export default function AdminDashboard({ onLogout }) {
 
       alert("Session deleted successfully!");
     } catch (err) {
-      console.error("Delete error:", err);
       alert("Error deleting session: " + err.message);
     }
   };

